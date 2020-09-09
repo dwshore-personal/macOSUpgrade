@@ -98,6 +98,7 @@ fi
 
 # Functions
 quitAllApps() {
+	# Code pulled from: https://stackoverflow.com/questions/43289901/shell-script-for-closing-all-apps-open-dock-via-command-line
 	# Creates a comma-separated String of open applications and assign it to the APPS variable.
 	APPS=$(osascript -e 'tell application "System Events" to get name of (processes where background only is false)')
 
@@ -113,10 +114,17 @@ quitAllApps() {
 	
 	  # Avoid closing the "Finder" and your CLI tool.
 	  # Note: you may need to change "iTerm" to "Terminal"
-	  if [[ ! "$appName" == "Finder" && ! "$appName" == "Terminal" && ! "$appName" == "BBEdit" ]]; then
+	  if [[ ! "$appName" == "Finder" && ! "$appName" == "Terminal" ]]; then
 	    # quit the application
 	    echo "[quit-all] quitting: "$appName
 	    osascript -e 'quit app "'"$appName"'"'
+	    sleep 1
+	    if (ps aux | grep "$appName" | grep -v "grep" > /dev/null); then
+      		echo "$appName did not quit. Exiting script."
+      		# Use JamfHelper to tell the user what happened.
+      		"$jamfHelper" -windowType utility -title "$appName didn't quit'" -icon "$warnIcon" -description "We were unable to close $appName. Please save your work, close the app, then try again." -button1 "Okay" -cancelButton 1
+      		exit 1
+		fi
 	  fi
 	done
 }
